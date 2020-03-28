@@ -3,30 +3,30 @@ title: "数据科学报告"
 author: "武碧璇"
 date: '2020-03-27'
 output:
-  html_document:
-    df_print: paged
   pdf_document:
     includes:
       in_header: preamble.tex
     number_sections: yes
+  html_document:
+    df_print: paged
 fontsize: 12pt
 documentclass: article
 papersize: a5
 abstract: |
-  思考并完成老师所布置题目，回顾统计知识基础及增强利用R语言处理问题的能力。并且在书写报告的过程中，熟悉RMarkdown的使用方法。
+ 思考并完成老师所布置题目，回顾统计知识基础及增强利用R语言处理问题的能力。并且在书写报告的过程中，熟悉RMarkdown的使用方法。
 ---
 
 # 真值与拟合值比较
 
-使用蒙特卡洛方法对标准正态分布进行拟合。首先，根据标准正态分布的累积密度函数计算各`t`值下的真值。其次，利用标准正态分布的随机样本值，与`t`值进行比较构造计数函数，计算正态分布样本的拟合值。最后，比较不同`t`和`n`值下，蒙特卡洛方法的拟合程度。
+ 使用蒙特卡洛方法对标准正态分布进行拟合。首先，根据标准正态分布的累积密度函数计算各`t`值下的真值。其次，利用标准正态分布的随机样本值，与`t`值进行比较构造计数函数，计算正态分布样本的拟合值。最后，比较不同`t`和`n`值下，蒙特卡洛方法的拟合程度。
 
-```{r, include = FALSE}
+```{r, include = FALSE, tidy=TRUE}
 tmatrix = t(as.matrix (c(0,0.67,0.84,1.28,1.65,2.32,2.58,3.09,3.72)) )
 nmatrix = t(as.matrix (c(100,1000,10000)) )
 end = matrix(nrow=3,ncol=9)
 ```
 
-1. 计算不同`t`值的正态分布真值。
+1.计算不同`t`值的正态分布真值。
 ```{r, results='hide', prompt=TRUE, tidy=TRUE}
 real = pnorm(tmatrix)
 ```
@@ -38,6 +38,7 @@ $$
 n \in & \{10^2, 10^3, 10^4\} 
 \end{aligned}
 $$
+
 使用程序代码如下：
 ```{r, results='hide', prompt=TRUE, tidy=TRUE}
 i = 1
@@ -59,7 +60,7 @@ while (i<=3){
 ```
 
 3.生成表格，比较真值和拟合值。
-```{r, echo=FALSE, prompt=TRUE, tidy=TRUE}
+```{r, results='asis', prompt=TRUE, tidy=TRUE}
 tablevalue = rbind(tmatrix,real,end)
 col = as.matrix(c("t","realvalue","n=10^2","n=10^3","n=10^4"))
 table = cbind(col,tablevalue)
@@ -67,4 +68,59 @@ knitr::kable(table,caption ="Comparison between real values and approximation",f
 
 ```
 
-# 盒形图
+
+# 箱线图
+
+在不同`n`值下，重复100次拟合过程，计算误差$error=\Phi(t)-\hat\Phi(t)$ ，并通过箱线图对比不同`t`值下的的误差分布情况。修改下述代码中`n`的取值，即可获得不同`n`值时的箱线图 $ n \in \{10^2, 10^3, 10^4\}$
+
+```{r,results='hide', prompt=TRUE, tidy=TRUE}
+n=100
+
+end = matrix(nrow=100,ncol=9)
+error = matrix(nrow=100,ncol=9)
+
+a = 1
+j = 1
+while(a<=100){
+  while (j<=9){
+     t = tmatrix[1,j]
+     x = as.matrix(rnorm(n))
+     y = ifelse((x<=t),1,0)
+     end[a,j] = apply(y,2,sum)/n
+     error[a,j] = end[a,j]-real[1,j]
+     j=j+1
+  }
+  j = 1
+  a=a+1
+}
+
+col1=as.matrix(c(rep(0.0,100),rep(0.67,100),rep(0.84,100),rep(1.28,100),rep(1.65,100),rep(2.32,100),rep(2.58,100),rep(3.09,100),rep(3.72,100)))
+col2=as.matrix(c(error[,1],error[,2],error[,3],error[,4],error[,5],error[,6],error[,7],error[,8],error[,9]))
+col=cbind(col1,col2)   
+
+number=data.frame(col)
+
+library(ggplot2)
+box = ggplot(data = number, mapping = aes(
+       x = X1,
+       y = X2,group=X1))
+box + geom_boxplot()+
+      coord_flip()+
+      scale_x_continuous(breaks=c(0.0,0.67, 0.84,1.28,1.65,2.32,2.58,3.09,3.72)) + 
+      labs(title="box plot of errors",x="t",y="error") 
+```
+
+# 总结
+
+收获：通过这次作业加深和巩固了R语言的使用，并且练习了RMarkdown的使用。
+
+不足：1. 使用`>knite::xtable(number)`命令生成表格时，使用`>digits=`命令控制表格内数据小数位数无效。生成的表格太丑，需要进一步学习熟练。   
+2. 由于RMarkdown和laTeX等软件对于中文的适配程度远不如英文，在加上自身熟练程度较差。knit一键生成的PDF和HTML文件丑。
+
+
+
+
+
+
+
+
